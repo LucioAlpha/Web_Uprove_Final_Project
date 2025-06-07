@@ -1,0 +1,56 @@
+<html>
+
+<head>
+  <title>液化石油氣歷史價格</title>
+  <link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+
+<body>
+
+  <h2>新增歷史牌價</h2>
+  <form id="gas_form">
+    <label for="date">調價日期:</label>
+    <input type="date" id="date" name="date" required><br><br>
+    <label for="dealer">家用液化石油氣_經銷商_每公斤元:</label>
+    <input type="text" id="dealer" name="dealer" required><br><br>
+    <label for="propane">工業用丙烷_每公斤元:</label>
+    <input type="text" id="propane" name="propane" required><br><br>
+    <label for="propylene">工業用丙丁烷_每公斤元:</label>
+    <input type="text" id="propylene" name="propylene" required><br><br>
+    <label for="butane">工業用丁烷_每公斤元:</label>
+    <input type="text" id="butane" name="butane" required><br><br>
+    <label for="station">民營加氣站_每公斤元:</label>
+    <input type="text" id="station" name="station" required><br><br>
+    <label for="public">一般民眾_每公斤元:</label>
+    <input type="text" id="public" name="public" required><br><br>
+    <input type="submit" value="Submit">
+  </form>
+  <p id="log"></p>
+  <div id="history-table-container"></div>
+  <canvas id="historyChart" width="800" height="400"></canvas>
+
+  <h2>查詢歷史牌價折線圖</h2>
+  <div class="query-section">
+    <label>單一年份：<input type="number" id="singleYear" min="2000" max="2100"> <button id="btnSingleYear">查詢</button></label>
+    <label style="margin-left:2em;">年份區間：
+      <input type="number" id="rangeStart" min="2000" max="2100"> -
+      <input type="number" id="rangeEnd" min="2000" max="2100">
+      <button id="btnRange">查詢</button>
+    </label>
+  </div>
+  <div class="chart-container">
+    <div class="chart-block">
+      <canvas id="chartSingleYear" width="800" height="300"></canvas>
+      <div id="tableSingleYear"></div>
+    </div>
+    <div class="chart-block">
+      <canvas id="chartRange" width="800" height="300"></canvas>
+      <div id="tableRange"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/javascripts/script.js"></script>
+</body>
+
+</html>
