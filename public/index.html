@@ -15,7 +15,35 @@
     </button>
   </nav>
   <div class="container">
-    <h1 v-if="currentTab==='home'">首頁</h1>
+    <!-- 首頁內容 -->
+    <div v-if="currentTab==='home'">
+      <div class="home-header">
+        <h1>歡迎使用瓦斯價格查詢系統</h1>
+        <p class="welcome-message">提供中油液化石油氣歷史牌價、全國家用桶裝瓦斯均價及各縣市月均價查詢與分析</p>
+      </div>
+
+      <div class="feature-cards">
+        <div class="feature-card">
+          <h2>中油液化石油氣歷史牌價</h2>
+          <p>查詢歷史瓦斯價格趨勢，涵蓋經銷商、工業用及一般民眾價格</p>
+          <button class="btn-primary" @click="currentTab='history'">前往查詢</button>
+        </div>
+
+        <div class="feature-card">
+          <h2>全國家用桶裝瓦斯均價</h2>
+          <p>查詢全國家用桶裝瓦斯歷年均價變化趨勢</p>
+          <button class="btn-primary" @click="currentTab='national'">前往查詢</button>
+        </div>
+
+        <div class="feature-card">
+          <h2>各縣市家用桶裝瓦斯月均價</h2>
+          <p>查詢各縣市家用桶裝瓦斯月均價，支援縣市及區域篩選</p>
+          <button class="btn-primary" @click="currentTab='local'">前往查詢</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 其他分頁內容 -->
     <div v-else>
       <h1>{{ tabTitle }}</h1>
       <button class="btn-primary" @click="showInsert = !showInsert">{{ showInsert ? '關閉新增表單' : '新增資料' }}</button>
