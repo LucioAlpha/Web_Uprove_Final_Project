@@ -118,7 +118,21 @@
       </div>
 
       <!-- 圖表顯示 -->
-      <div v-if="chartId" class="chart-container" style="margin-top:2em;">
+      <div v-if="currentTab === 'national'">
+        <div class="chart-container" style="margin-top:2em;" v-if="chartNationalOverview">
+          <h3>總覽</h3>
+          <canvas id="chartNationalOverview"></canvas>
+        </div>
+        <div class="chart-container" style="margin-top:2em;" v-if="chartNationalSingleYear">
+          <h3>年份查詢</h3>
+          <canvas id="chartNationalSingleYear"></canvas>
+        </div>
+        <div class="chart-container" style="margin-top:2em;" v-if="chartNationalYearRange">
+          <h3>年份區間查詢</h3>
+          <canvas id="chartNationalYearRange"></canvas>
+        </div>
+      </div>
+      <div v-else-if="chartId" class="chart-container" style="margin-top:2em;">
         <canvas :id="chartId"></canvas>
       </div>
 
@@ -144,4 +158,5 @@
 <script src="/javascripts/script.js"></script>
 </body>
 </html>
+
 

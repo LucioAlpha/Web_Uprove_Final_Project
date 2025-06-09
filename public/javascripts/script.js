@@ -22,7 +22,28 @@ createApp({
       tableData: [],
       tableColumns: [],
       chartId: '',
-      chartObj: null
+      chartObj: null,
+      // 多圖表支援
+      chartNationalOverview: false,
+      chartNationalSingleYear: false,
+      chartNationalYearRange: false,
+      chartNationalOverviewObj: null,
+      chartNationalSingleYearObj: null,
+      chartNationalYearRangeObj: null,
+      // 中油多圖表支援
+      chartHistoryYear: false,
+      chartHistoryYearRange: false,
+      chartHistoryYearObj: null,
+      chartHistoryYearRangeObj: null,
+      // 各縣市多圖表支援
+      chartLocalYear: false,
+      chartLocalYearRange: false,
+      chartLocalCity: false,
+      chartLocalRegion: false,
+      chartLocalYearObj: null,
+      chartLocalYearRangeObj: null,
+      chartLocalCityObj: null,
+      chartLocalRegionObj: null
     }
   },
   computed: {
@@ -38,7 +59,7 @@ createApp({
       this.tableData = [];
       this.tableColumns = [];
       this.queryYear = this.queryStart = this.queryEnd = this.queryCity = this.queryRegion = '';
-      if (this.chartObj) { this.chartObj.destroy(); this.chartObj = null; }
+      this.destroyAllCharts();
       if (val !== 'home') this.loadAll();
     }
   },
@@ -46,6 +67,32 @@ createApp({
     if (this.currentTab !== 'home') this.loadAll();
   },
   methods: {
+    destroyAllCharts() {
+      if (this.chartObj) { this.chartObj.destroy(); this.chartObj = null; }
+      if (this.chartNationalOverviewObj) { this.chartNationalOverviewObj.destroy(); this.chartNationalOverviewObj = null; }
+      if (this.chartNationalSingleYearObj) { this.chartNationalSingleYearObj.destroy(); this.chartNationalSingleYearObj = null; }
+      if (this.chartNationalYearRangeObj) { this.chartNationalYearRangeObj.destroy(); this.chartNationalYearRangeObj = null; }
+      // 新增中油圖表銷毀
+      if (this.chartHistoryYearObj) { this.chartHistoryYearObj.destroy(); this.chartHistoryYearObj = null; }
+      if (this.chartHistoryYearRangeObj) { this.chartHistoryYearRangeObj.destroy(); this.chartHistoryYearRangeObj = null; }
+      // 新增各縣市圖表銷毀
+      if (this.chartLocalYearObj) { this.chartLocalYearObj.destroy(); this.chartLocalYearObj = null; }
+      if (this.chartLocalYearRangeObj) { this.chartLocalYearRangeObj.destroy(); this.chartLocalYearRangeObj = null; }
+      if (this.chartLocalCityObj) { this.chartLocalCityObj.destroy(); this.chartLocalCityObj = null; }
+      if (this.chartLocalRegionObj) { this.chartLocalRegionObj.destroy(); this.chartLocalRegionObj = null; }
+      this.chartId = '';
+      this.chartNationalOverview = false;
+      this.chartNationalSingleYear = false;
+      this.chartNationalYearRange = false;
+      // 新增中油圖表顯示控制
+      this.chartHistoryYear = false;
+      this.chartHistoryYearRange = false;
+      // 新增各縣市圖表顯示控制
+      this.chartLocalYear = false;
+      this.chartLocalYearRange = false;
+      this.chartLocalCity = false;
+      this.chartLocalRegion = false;
+    },
     async loadAll() {
       let url = '';
       if (this.currentTab === 'history') url = '/api/history';
@@ -56,7 +103,12 @@ createApp({
       const data = await res.json();
       this.tableData = data;
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
-      this.drawChart(data);
+      
+      if (this.currentTab === 'national') {
+        this.drawNationalOverviewChart(data);
+      } else {
+        this.drawChart(data);
+      }
     },
     async submitHistory() {
       const res = await fetch('/api/insert/History', {
@@ -95,7 +147,16 @@ createApp({
       const data = await res.json();
       this.tableData = data;
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
-      this.drawChart(data);
+      
+      if (this.currentTab === 'national') {
+        this.drawNationalSingleYearChart(data);
+      } else if (this.currentTab === 'history') {
+        this.drawHistoryYearChart(data);
+      } else if (this.currentTab === 'local') {
+        this.drawLocalYearChart(data);
+      } else {
+        this.drawChart(data);
+      }
     },
     async queryRange() {
       let url = '', body = {};
@@ -107,7 +168,16 @@ createApp({
       const data = await res.json();
       this.tableData = data;
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
-      this.drawChart(data);
+      
+      if (this.currentTab === 'national') {
+        this.drawNationalYearRangeChart(data);
+      } else if (this.currentTab === 'history') {
+        this.drawHistoryYearRangeChart(data);
+      } else if (this.currentTab === 'local') {
+        this.drawLocalYearRangeChart(data);
+      } else {
+        this.drawChart(data);
+      }
     },
     async queryCityFunc() {
       if (!this.queryCity) return;
@@ -115,7 +185,7 @@ createApp({
       const data = await res.json();
       this.tableData = data;
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
-      this.drawChart(data);
+      this.drawLocalCityChart(data);
     },
     async queryRegionFunc() {
       if (!this.queryRegion) return;
@@ -123,7 +193,85 @@ createApp({
       const data = await res.json();
       this.tableData = data;
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
-      this.drawChart(data);
+      this.drawLocalRegionChart(data);
+    },
+    drawNationalOverviewChart(data) {
+      if (this.chartNationalOverviewObj) { this.chartNationalOverviewObj.destroy(); this.chartNationalOverviewObj = null; }
+      if (!data || !data.length) { this.chartNationalOverview = false; return; }
+      
+      this.chartNationalOverview = true;
+      this.$nextTick(() => {
+        const ctx = document.getElementById('chartNationalOverview');
+        if (!ctx) return;
+        
+        const labels = data.map(row => row['年份']);
+        const datasets = [{
+          label: '價格',
+          data: data.map(row => row['價格']),
+          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          fill: true,
+          tension: 0.2
+        }];
+        
+        this.chartNationalOverviewObj = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+      });
+    },
+    drawNationalSingleYearChart(data) {
+      if (this.chartNationalSingleYearObj) { this.chartNationalSingleYearObj.destroy(); this.chartNationalSingleYearObj = null; }
+      if (!data || !data.length) { this.chartNationalSingleYear = false; return; }
+      
+      this.chartNationalSingleYear = true;
+      this.$nextTick(() => {
+        const ctx = document.getElementById('chartNationalSingleYear');
+        if (!ctx) return;
+        
+        const labels = data.map(row => row['年份']);
+        const datasets = [{
+          label: '價格',
+          data: data.map(row => row['價格']),
+          borderColor: 'rgba(255, 99, 132, 1)',
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          fill: true,
+          tension: 0.2
+        }];
+        
+        this.chartNationalSingleYearObj = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+      });
+    },
+    drawNationalYearRangeChart(data) {
+      if (this.chartNationalYearRangeObj) { this.chartNationalYearRangeObj.destroy(); this.chartNationalYearRangeObj = null; }
+      if (!data || !data.length) { this.chartNationalYearRange = false; return; }
+      
+      this.chartNationalYearRange = true;
+      this.$nextTick(() => {
+        const ctx = document.getElementById('chartNationalYearRange');
+        if (!ctx) return;
+        
+        const labels = data.map(row => row['年份']);
+        const datasets = [{
+          label: '價格',
+          data: data.map(row => row['價格']),
+          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          fill: true,
+          tension: 0.2
+        }];
+        
+        this.chartNationalYearRangeObj = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+      });
     },
     drawChart(data) {
       if (this.chartObj) { this.chartObj.destroy(); this.chartObj = null; }
@@ -156,17 +304,6 @@ createApp({
           fill: false,
           tension: 0.2
         }));
-      } else if (this.currentTab === 'national') {
-        chartId = 'chartNational';
-        labels = data.map(row => row['年份']);
-        datasets = [{
-          label: '價格',
-          data: data.map(row => row['價格']),
-          borderColor: 'rgba(54, 162, 235, 1)',
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          fill: true,
-          tension: 0.2
-        }];
       } else if (this.currentTab === 'local') {
         chartId = 'chartLocal';
         labels = data.map(row => row['查報日期(年/月)'] + '-' + row['縣市名稱']);
@@ -189,6 +326,176 @@ createApp({
           options: { responsive: true, plugins: { legend: { position: 'top' } } }
         });
       });
-    }
+    },
+    drawHistoryYearChart(data) {
+      if (this.chartHistoryYearObj) { this.chartHistoryYearObj.destroy(); this.chartHistoryYearObj = null; }
+      if (!data || !data.length) { this.chartHistoryYear = false; return; }
+      this.chartHistoryYear = true;
+      this.$nextTick(() => {
+        const ctx = document.getElementById('historyYearChart');
+        if (!ctx) return;
+        const labels = data.map(row => row['調價日期']);
+        const fields = [
+          '家用液化石油氣_經銷商_每公斤元',
+          '工業用丙烷_每公斤元',
+          '工業用丙丁烷_每公斤元',
+          '工業用丁烷_每公斤元',
+          '民營加氣站_每公斤元',
+          '一般民眾_每公斤元'
+        ];
+        const colors = [
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)'
+        ];
+        const datasets = fields.map((f, i) => ({
+          label: f,
+          data: data.map(row => row[f]),
+          borderColor: colors[i],
+          backgroundColor: colors[i],
+          fill: false,
+          tension: 0.2
+        }));
+        this.chartHistoryYearObj = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+      });
+    },
+    drawHistoryYearRangeChart(data) {
+      if (this.chartHistoryYearRangeObj) { this.chartHistoryYearRangeObj.destroy(); this.chartHistoryYearRangeObj = null; }
+      if (!data || !data.length) { this.chartHistoryYearRange = false; return; }
+      this.chartHistoryYearRange = true;
+      this.$nextTick(() => {
+        const ctx = document.getElementById('historyYearRangeChart');
+        if (!ctx) return;
+        const labels = data.map(row => row['調價日期']);
+        const fields = [
+          '家用液化石油氣_經銷商_每公斤元',
+          '工業用丙烷_每公斤元',
+          '工業用丙丁烷_每公斤元',
+          '工業用丁烷_每公斤元',
+          '民營加氣站_每公斤元',
+          '一般民眾_每公斤元'
+        ];
+        const colors = [
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)'
+        ];
+        const datasets = fields.map((f, i) => ({
+          label: f,
+          data: data.map(row => row[f]),
+          borderColor: colors[i],
+          backgroundColor: colors[i],
+          fill: false,
+          tension: 0.2
+        }));
+        this.chartHistoryYearRangeObj = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+      });
+    },
+    drawLocalYearChart(data) {
+      if (this.chartLocalYearObj) { this.chartLocalYearObj.destroy(); this.chartLocalYearObj = null; }
+      if (!data || !data.length) { this.chartLocalYear = false; return; }
+      this.chartLocalYear = true;
+      this.$nextTick(() => {
+        const ctx = document.getElementById('localYearChart');
+        if (!ctx) return;
+        const labels = data.map(row => row['查報日期(年/月)'] + '-' + row['縣市名稱']);
+        const datasets = [{
+          label: '查報均價(元/20公斤(桶))',
+          data: data.map(row => row['查報均價(元/20公斤(桶))']),
+          borderColor: 'rgba(255, 99, 132, 1)',
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          fill: true,
+          tension: 0.2
+        }];
+        this.chartLocalYearObj = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+      });
+    },
+    drawLocalYearRangeChart(data) {
+      if (this.chartLocalYearRangeObj) { this.chartLocalYearRangeObj.destroy(); this.chartLocalYearRangeObj = null; }
+      if (!data || !data.length) { this.chartLocalYearRange = false; return; }
+      this.chartLocalYearRange = true;
+      this.$nextTick(() => {
+        const ctx = document.getElementById('localYearRangeChart');
+        if (!ctx) return;
+        const labels = data.map(row => row['查報日期(年/月)'] + '-' + row['縣市名稱']);
+        const datasets = [{
+          label: '查報均價(元/20公斤(桶))',
+          data: data.map(row => row['查報均價(元/20公斤(桶))']),
+          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          fill: true,
+          tension: 0.2
+        }];
+        this.chartLocalYearRangeObj = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+      });
+    },
+    drawLocalCityChart(data) {
+      if (this.chartLocalCityObj) { this.chartLocalCityObj.destroy(); this.chartLocalCityObj = null; }
+      if (!data || !data.length) { this.chartLocalCity = false; return; }
+      this.chartLocalCity = true;
+      this.$nextTick(() => {
+        const ctx = document.getElementById('localCityChart');
+        if (!ctx) return;
+        const labels = data.map(row => row['查報日期(年/月)']);
+        const datasets = [{
+          label: '查報均價(元/20公斤(桶))',
+          data: data.map(row => row['查報均價(元/20公斤(桶))']),
+          borderColor: 'rgba(255, 206, 86, 1)',
+          backgroundColor: 'rgba(255, 206, 86, 0.2)',
+          fill: true,
+          tension: 0.2
+        }];
+        this.chartLocalCityObj = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+      });
+    },
+    drawLocalRegionChart(data) {
+      if (this.chartLocalRegionObj) { this.chartLocalRegionObj.destroy(); this.chartLocalRegionObj = null; }
+      if (!data || !data.length) { this.chartLocalRegion = false; return; }
+      this.chartLocalRegion = true;
+      this.$nextTick(() => {
+        const ctx = document.getElementById('localRegionChart');
+        if (!ctx) return;
+        const labels = data.map(row => row['查報日期(年/月)'] + '-' + row['縣市名稱']);
+        const datasets = [{
+          label: '查報均價(元/20公斤(桶))',
+          data: data.map(row => row['查報均價(元/20公斤(桶))']),
+          borderColor: 'rgba(153, 102, 255, 1)',
+          backgroundColor: 'rgba(153, 102, 255, 0.2)',
+          fill: true,
+          tension: 0.2
+        }];
+        this.chartLocalRegionObj = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+      });
+    },
   }
 }).mount('#app');
