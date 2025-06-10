@@ -100,6 +100,20 @@
             <label class="form-label">縣市查詢: <input type="text" v-model="queryCity" placeholder="縣市名稱"></label>
             <button @click="queryCityFunc" class="btn-secondary">查詢</button>
           </div>
+            <!-- 區域查詢 (僅適用於各縣市家用桶裝瓦斯月均價) -->
+          <div v-if="currentTab==='local'" class="query-item">
+            <label class="form-label">區域:
+              <select v-model="queryRegion">
+                <option value="">請選擇區域</option>
+                <option value="北">北部</option>
+                <option value="中">中部</option>
+                <option value="南">南部</option>
+                <option value="東">東部</option>
+                <option value="離島">離島</option>
+              </select>
+            </label>
+            <button @click="queryRegionFunc" class="btn-secondary">查詢</button>
+          </div>
           <!-- 多條件查詢（僅適用於各縣市家用桶裝瓦斯月均價） -->
           <div v-if="currentTab==='local'" class="query-item">
             <label class="form-label">年份:
@@ -199,9 +213,10 @@
           <h3>縣市查詢折線圖</h3>
           <canvas id="localCityChart"></canvas>
         </div>
-        <div class="chart-container" v-if="chartLocalRegion">
-
-        </div>
+<!--        <div class="chart-container" v-if="chartLocalRegion">-->
+<!--          <h3>區域查詢折線圖</h3>-->
+<!--          <canvas id="localRegionChart"></canvas>-->
+<!--        </div>-->
       </div>
       <!-- 資料表格 -->
       <div class="table-container" style="margin-top:2em;">
@@ -225,6 +240,8 @@
 <script src="/javascripts/script.js"></script>
 </body>
 </html>
+
+
 
 
 
