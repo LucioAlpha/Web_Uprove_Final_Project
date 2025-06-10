@@ -138,6 +138,7 @@ createApp({
       if (res.ok) { this.loadAll(); this.showInsert = false; this.formLocal = { city: '', price: '', date: '' }; }
     },
     async querySingle() {
+      this.destroyAllCharts(); // 查詢前清除所有圖表
       let url = '', body = {};
       if (!this.queryYear) return;
       if (this.currentTab === 'history') { url = '/api/query/History'; body = { year: this.queryYear }; }
@@ -145,9 +146,15 @@ createApp({
       else if (this.currentTab === 'local') { url = '/api/query/Local'; body = { year: this.queryYear }; }
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
+      if (data.error) {
+        this.tableData = [];
+        this.tableColumns = [];
+        this.insertMsg = data.error;
+        return;
+      }
+      this.insertMsg = '';
       this.tableData = data;
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
-      
       if (this.currentTab === 'national') {
         this.drawNationalSingleYearChart(data);
       } else if (this.currentTab === 'history') {
@@ -159,6 +166,7 @@ createApp({
       }
     },
     async queryRange() {
+      this.destroyAllCharts(); // 查詢前清除所有圖表
       let url = '', body = {};
       if (!this.queryStart || !this.queryEnd) return;
       if (this.currentTab === 'history') { url = '/api/query/History'; body = { start: this.queryStart, end: this.queryEnd }; }
@@ -166,9 +174,15 @@ createApp({
       else if (this.currentTab === 'local') { url = '/api/query/Local'; body = { start: this.queryStart, end: this.queryEnd }; }
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
+      if (data.error) {
+        this.tableData = [];
+        this.tableColumns = [];
+        this.insertMsg = data.error;
+        return;
+      }
+      this.insertMsg = '';
       this.tableData = data;
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
-      
       if (this.currentTab === 'national') {
         this.drawNationalYearRangeChart(data);
       } else if (this.currentTab === 'history') {
@@ -180,17 +194,33 @@ createApp({
       }
     },
     async queryCityFunc() {
+      this.destroyAllCharts(); // 查詢前清除所有圖表
       if (!this.queryCity) return;
       const res = await fetch('/api/query/Local', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ city: this.queryCity }) });
       const data = await res.json();
+      if (data.error) {
+        this.tableData = [];
+        this.tableColumns = [];
+        this.insertMsg = data.error;
+        return;
+      }
+      this.insertMsg = '';
       this.tableData = data;
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
       this.drawLocalCityChart(data);
     },
     async queryRegionFunc() {
+      this.destroyAllCharts(); // 查詢前清除所有圖表
       if (!this.queryRegion) return;
       const res = await fetch('/api/query/Local', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ region: this.queryRegion }) });
       const data = await res.json();
+      if (data.error) {
+        this.tableData = [];
+        this.tableColumns = [];
+        this.insertMsg = data.error;
+        return;
+      }
+      this.insertMsg = '';
       this.tableData = data;
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
       this.drawLocalRegionChart(data);

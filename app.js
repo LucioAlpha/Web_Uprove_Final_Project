@@ -101,13 +101,14 @@ app.post('/api/query/History', (req, res) => {
   let params = [];
   if (year) {
     sql += ' WHERE substr(調價日期, 1, 4) = ?';
-    params.push(year);
+    params.push(year.toString());
   } else if (start && end) {
     sql += ' WHERE substr(調價日期, 1, 4) BETWEEN ? AND ?';
-    params.push(start, end);
+    params.push(start.toString(), end.toString());
   }
   db.all(sql, params, (err, rows) => {
     if (err) return res.status(500).json({ error: '查詢失敗' });
+    if (!rows || rows.length === 0) return res.status(404).json({ error: '查無資料' });
     res.json(rows);
   });
 });
@@ -135,10 +136,10 @@ app.post('/api/query/Local', (req, res) => {
   let params = [];
   if (year) {
     sql += ' AND substr(查報日期(年/月), 1, 4) = ?';
-    params.push(year);
+    params.push(year.toString());
   } else if (start && end) {
     sql += ' AND substr(查報日期(年/月), 1, 4) BETWEEN ? AND ?';
-    params.push(start, end);
+    params.push(start.toString(), end.toString());
   }
   if (city) {
     sql += ' AND 縣市名稱 = ?';
@@ -161,6 +162,7 @@ app.post('/api/query/Local', (req, res) => {
   }
   db.all(sql, params, (err, rows) => {
     if (err) return res.status(500).json({ error: '查詢失敗' });
+    if (!rows || rows.length === 0) return res.status(404).json({ error: '查無資料' });
     res.json(rows);
   });
 });

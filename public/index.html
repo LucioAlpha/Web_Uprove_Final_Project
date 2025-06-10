@@ -132,10 +132,28 @@
           <canvas id="chartNationalYearRange"></canvas>
         </div>
       </div>
+      <div class="chart-container" v-if="chartHistoryYear">
+        <h3>年份查詢折線圖</h3>
+        <canvas id="historyYearChart"></canvas>
+      </div>
+      <div class="chart-container" v-if="chartHistoryYearRange">
+        <h3>年份區間查詢折線圖</h3>
+        <canvas id="historyYearRangeChart"></canvas>
+      </div>
       <div v-else-if="chartId" class="chart-container" style="margin-top:2em;">
         <canvas :id="chartId"></canvas>
       </div>
-
+      <div v-else-if="chartId" class="chart-container" style="margin-top:2em;">
+        <canvas :id="chartId"></canvas>
+      </div>
+      <div class="chart-container" v-if="chartLocalCity">
+        <h3>縣市查詢折線圖</h3>
+        <canvas id="localCityChart"></canvas>
+      </div>
+      <div class="chart-container" v-if="chartLocalRegion">
+        <h3>區域查詢折線圖</h3>
+        <canvas id="localRegionChart"></canvas>
+      </div>
       <!-- 資料表格 -->
       <div class="table-container" style="margin-top:2em;">
         <table v-if="tableData.length" class="data-table">
@@ -158,6 +176,9 @@
 <script src="/javascripts/script.js"></script>
 </body>
 </html>
+
+
+
 
 
 
