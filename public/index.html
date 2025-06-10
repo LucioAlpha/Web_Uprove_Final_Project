@@ -144,6 +144,16 @@
         <canvas :id="chartId"></canvas>
       </div>
       <div v-else-if="chartId" class="chart-container" style="margin-top:2em;">
+        <div v-if="currentTab === 'local'">
+          <div class="chart-container" v-if="chartLocalYear">
+            <h3>年份查詢折線圖</h3>
+            <canvas id="localYearChart"></canvas>
+          </div>
+          <div class="chart-container" v-if="chartLocalYearRange">
+            <h3>年份區間查詢折線圖</h3>
+            <canvas id="localYearRangeChart"></canvas>
+          </div>
+        </div>
         <canvas :id="chartId"></canvas>
       </div>
       <div class="chart-container" v-if="chartLocalCity">
