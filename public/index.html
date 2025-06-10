@@ -154,6 +154,16 @@
         <h3>區域查詢折線圖</h3>
         <canvas id="localRegionChart"></canvas>
       </div>
+      <div v-if="currentTab === 'local'">
+        <div class="chart-container" v-if="chartLocalYear">
+          <h3>年份查詢折線圖</h3>
+          <canvas id="localYearChart"></canvas>
+        </div>
+        <div class="chart-container" v-if="chartLocalYearRange">
+          <h3>年份區間查詢折線圖</h3>
+          <canvas id="localYearRangeChart"></canvas>
+        </div>
+      </div>
       <!-- 資料表格 -->
       <div class="table-container" style="margin-top:2em;">
         <table v-if="tableData.length" class="data-table">
@@ -176,6 +186,7 @@
 <script src="/javascripts/script.js"></script>
 </body>
 </html>
+
 
 
 
