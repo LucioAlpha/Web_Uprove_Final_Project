@@ -164,5 +164,152 @@ app.post('/api/query/Local', (req, res) => {
     res.json(rows);
   });
 });
+// ========== API: 多條件查詢（Local_history） ==========
+app.post('/query/Local', (req, res) => {
+  const { start, end, year, city, cities } = req.body;
+  let conditions = [];
+  let params = [];
+  if (start && end) {
+    conditions.push('(查報年分 * 100 + 查報月份 >= ? AND 查報年分 * 100 + 查報月份 <= ?)');
+    params.push(parseInt(start), parseInt(end));
+  } else if (year) {
+    conditions.push('查報年分 = ?');
+    params.push(parseInt(year));
+  }
+  if (Array.isArray(cities) && cities.length > 0) {
+    conditions.push(`縣市名稱 IN (${cities.map(() => '?').join(',')})`);
+    params.push(...cities);
+  } else if (city) {
+    conditions.push('縣市名稱 = ?');
+    params.push(city);
+  }
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+  const sql = `SELECT * FROM Local_history ${where}`;
+  db.all(sql, params, (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: '資料查詢失敗' });
+    }
+    res.json(rows);
+  });
+});
+// ========== API: 多條件查詢（National_history） ==========
+app.post('/query/National', (req, res) => {
+  const { start, end, year } = req.body;
+  let conditions = [];
+  let params = [];
+  if (start && end) {
+    conditions.push('年份 >= ? AND 年份 <= ?');
+    params.push(parseInt(start), parseInt(end));
+  } else if (year) {
+    conditions.push('年份 = ?');
+    params.push(parseInt(year));
+  }
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+  const sql = `SELECT * FROM National_history ${where} ORDER BY 年份`;
+  db.all(sql, params, (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: '資料查詢失敗' });
+    }
+    res.json(rows);
+  });
+});
+// ========== API: 多條件查詢（Gas_history） ==========
+app.post('/query/Gas', (req, res) => {
+  const { start, end, year } = req.body;
+  let conditions = [];
+  let params = [];
+  if (start && end) {
+    conditions.push('(年分 >= ? AND 年分 <= ?)');
+    params.push(parseInt(start), parseInt(end));
+  } else if (year) {
+    conditions.push('(年分 >= ? AND 年分 <= ?)');
+    params.push(parseInt(year + '0101'), parseInt(year + '1231'));
+  }
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+  const sql = `SELECT * FROM Gas_history ${where} ORDER BY 年分, 月份, 日`;
+  db.all(sql, params, (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: '資料查詢失敗' });
+    }
+    res.json(rows);
+  });
+});
+
+// ========== 優化：統一多條件查詢 API ==========
+function buildQuery({ table, yearField, monthField, dayField, cityField, regionMap, orderBy, req }) {
+  const { start, end, year, city, cities, region } = req.body;
+  let conditions = [];
+  let params = [];
+  // 年分/區間查詢
+  if (start && end) {
+    if (monthField && dayField) {
+      // YYYYMMDD 格式
+      conditions.push(`(${yearField} >= ? AND ${yearField} <= ?)`);
+      params.push(parseInt(start), parseInt(end));
+    } else {
+      // YYYY 或 YYYYMM 格式
+      conditions.push(`${yearField} >= ? AND ${yearField} <= ?`);
+      params.push(parseInt(start), parseInt(end));
+    }
+  } else if (year) {
+    if (monthField && dayField) {
+      // YYYYMMDD 格式
+      conditions.push(`(${yearField} >= ? AND ${yearField} <= ?)`);
+      params.push(parseInt(year + '0101'), parseInt(year + '1231'));
+    } else {
+      // YYYY 或 YYYYMM 格式
+      conditions.push(`${yearField} = ?`);
+      params.push(parseInt(year));
+    }
+  }
+  // 多選縣市
+  if (Array.isArray(cities) && cities.length > 0 && cityField) {
+    conditions.push(`${cityField} IN (${cities.map(() => '?').join(',')})`);
+    params.push(...cities);
+  } else if (city && cityField) {
+    conditions.push(`${cityField} = ?`);
+    params.push(city);
+  }
+  // 區域查詢
+  if (region && regionMap && cityField) {
+    const regionCities = regionMap[region] || [];
+    if (regionCities.length) {
+      conditions.push(`${cityField} IN (${regionCities.map(() => '?').join(',')})`);
+      params.push(...regionCities);
+    }
+  }
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+  const sql = `SELECT * FROM ${table} ${where} ${orderBy ? orderBy : ''}`;
+  return { sql, params };
+}
+
+// 優化後的多條件查詢 API
+app.post('/query/optimized', (req, res) => {
+  const { type } = req.body;
+  let config = null;
+  const regionMap = {
+    '北': ['台北市','新北市','基隆市','桃園市','新竹市','新竹縣','宜蘭縣'],
+    '中': ['台中市','苗栗縣','彰化縣','南投縣','雲林縣'],
+    '南': ['高雄市','台南市','嘉義市','嘉義縣','屏東縣','台東縣'],
+    '東': ['花蓮縣','台東縣'],
+    '離島': ['澎湖縣','金門縣','連江縣']
+  };
+  if (type === 'local_history') {
+    config = { table: 'Local_history', yearField: '查報年分', monthField: '查報月份', cityField: '縣市名稱', regionMap };
+  } else if (type === 'national_history') {
+    config = { table: 'National_history', yearField: '年份', orderBy: 'ORDER BY 年份' };
+  } else if (type === 'gas_history') {
+    config = { table: 'Gas_history', yearField: '年分', monthField: '月份', dayField: '日', orderBy: 'ORDER BY 年分, 月份, 日' };
+  }
+  if (!config) return res.status(400).json({ error: 'type 參數錯誤' });
+  const { sql, params } = buildQuery({ ...config, req });
+  db.all(sql, params, (err, rows) => {
+    if (err) return res.status(500).json({ error: '查詢失敗' });
+    res.json(rows);
+  });
+});
 
 module.exports = app;
