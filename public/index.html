@@ -100,9 +100,20 @@
             <label class="form-label">縣市查詢: <input type="text" v-model="queryCity" placeholder="縣市名稱"></label>
             <button @click="queryCityFunc" class="btn-secondary">查詢</button>
           </div>
-          <!-- 區域查詢 (僅適用於各縣市家用桶裝瓦斯月均價) -->
+          <!-- 多條件查詢（僅適用於各縣市家用桶裝瓦斯月均價） -->
           <div v-if="currentTab==='local'" class="query-item">
-            <label class="form-label">區域查詢:
+            <label class="form-label">年份:
+              <input type="number" v-model="queryYear" placeholder="YYYY" style="width:100px;">
+            </label>
+            <label class="form-label">區間:
+              <input type="number" v-model="queryStart" placeholder="起始年份" style="width:100px;">
+              -
+              <input type="number" v-model="queryEnd" placeholder="結束年份" style="width:100px;">
+            </label>
+            <label class="form-label">縣市:
+              <input type="text" v-model="queryCity" placeholder="縣市名稱" style="width:100px;">
+            </label>
+            <label class="form-label">區域:
               <select v-model="queryRegion">
                 <option value="">請選擇區域</option>
                 <option value="北">北部</option>
@@ -112,7 +123,7 @@
                 <option value="離島">離島</option>
               </select>
             </label>
-            <button @click="queryRegionFunc" class="btn-secondary">查詢</button>
+            <button @click="queryLocalMulti" class="btn-secondary">多條件查詢</button>
           </div>
         </div>
       </div>
@@ -174,6 +185,24 @@
           <canvas id="localYearRangeChart"></canvas>
         </div>
       </div>
+      <!-- 各縣市家用桶裝瓦斯月均價 折線圖 -->
+      <div v-if="currentTab === 'local'">
+        <div class="chart-container" v-if="chartLocalYear">
+          <h3>年份查詢折線圖</h3>
+          <canvas id="localYearChart"></canvas>
+        </div>
+        <div class="chart-container" v-if="chartLocalYearRange">
+          <h3>年份區間查詢折線圖</h3>
+          <canvas id="localYearRangeChart"></canvas>
+        </div>
+        <div class="chart-container" v-if="chartLocalCity">
+          <h3>縣市查詢折線圖</h3>
+          <canvas id="localCityChart"></canvas>
+        </div>
+        <div class="chart-container" v-if="chartLocalRegion">
+
+        </div>
+      </div>
       <!-- 資料表格 -->
       <div class="table-container" style="margin-top:2em;">
         <table v-if="tableData.length" class="data-table">
@@ -196,6 +225,7 @@
 <script src="/javascripts/script.js"></script>
 </body>
 </html>
+
 
 
 

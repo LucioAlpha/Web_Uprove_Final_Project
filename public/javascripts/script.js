@@ -225,6 +225,32 @@ createApp({
       this.tableColumns = data.length ? Object.keys(data[0]) : [];
       this.drawLocalRegionChart(data);
     },
+    async queryLocalMulti() {
+      this.destroyAllCharts();
+      // 組合多條件
+      const body = {};
+      if (this.queryYear) body.year = this.queryYear;
+      if (this.queryStart) body.start = this.queryStart;
+      if (this.queryEnd) body.end = this.queryEnd;
+      if (this.queryCity) body.city = this.queryCity;
+      if (this.queryRegion) body.region = this.queryRegion;
+      const res = await fetch('/api/query/Local', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.error) {
+        this.tableData = [];
+        this.tableColumns = [];
+        this.insertMsg = data.error;
+        return;
+      }
+      this.insertMsg = '';
+      this.tableData = data;
+      this.tableColumns = data.length ? Object.keys(data[0]) : [];
+      this.drawLocalRegionChart(data); // 預設顯示區域圖表，可根據需求切換
+    },
     drawNationalOverviewChart(data) {
       if (this.chartNationalOverviewObj) { this.chartNationalOverviewObj.destroy(); this.chartNationalOverviewObj = null; }
       if (!data || !data.length) { this.chartNationalOverview = false; return; }
