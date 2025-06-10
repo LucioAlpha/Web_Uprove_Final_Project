@@ -132,21 +132,21 @@ app.post('/api/query/National', (req, res) => {
 // 各縣市家用桶裝瓦斯月均價: 年分、年分區間、縣市名稱、區域
 app.post('/api/query/Local', (req, res) => {
   const { year, start, end, city, region } = req.body;
-  let sql = 'SELECT * FROM 各縣市家用桶裝瓦斯月均價 WHERE 1=1';
+  let baseSql = 'SELECT * FROM 各縣市家用桶裝瓦斯月均價';
+  let conditions = [];
   let params = [];
   if (year) {
-    sql += ' AND substr(查報日期(年/月), 1, 4) = ?';
-    params.push(year.toString());
+    conditions.push('"查報日期(年/月)" BETWEEN ? AND ?');
+    params.push(parseInt(year + '01'), parseInt(year + '12'));
   } else if (start && end) {
-    sql += ' AND substr(查報日期(年/月), 1, 4) BETWEEN ? AND ?';
-    params.push(start.toString(), end.toString());
+    conditions.push('"查報日期(年/月)" BETWEEN ? AND ?');
+    params.push(parseInt(start + '01'), parseInt(end + '12'));
   }
   if (city) {
-    sql += ' AND 縣市名稱 = ?';
+    conditions.push('縣市名稱 = ?');
     params.push(city);
   }
   if (region) {
-    // 區域查詢: 需自行定義區域對應縣市
     const regionMap = {
       '北': ['台北市','新北市','基隆市','桃園市','新竹市','新竹縣','宜蘭縣'],
       '中': ['台中市','苗栗縣','彰化縣','南投縣','雲林縣'],
@@ -156,12 +156,22 @@ app.post('/api/query/Local', (req, res) => {
     };
     const cities = regionMap[region] || [];
     if (cities.length) {
-      sql += ` AND 縣市名稱 IN (${cities.map(()=>'?').join(',')})`;
+      conditions.push(`縣市名稱 IN (${cities.map(()=>'?').join(',')})`);
       params.push(...cities);
     }
   }
+  let sql = baseSql;
+  if (conditions.length > 0) {
+    sql += ' WHERE ' + conditions.join(' AND ');
+  }
+  // debug log
+  console.log('查詢SQL:', sql);
+  console.log('參數:', params);
   db.all(sql, params, (err, rows) => {
-    if (err) return res.status(500).json({ error: '查詢失敗' });
+    if (err) {
+      console.error('查詢失敗:', err);
+      return res.status(500).json({ error: '查詢失敗' });
+    }
     if (!rows || rows.length === 0) return res.status(404).json({ error: '查無資料' });
     res.json(rows);
   });
