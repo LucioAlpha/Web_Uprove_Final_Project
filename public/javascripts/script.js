@@ -434,97 +434,72 @@ createApp({
         });
       });
     },
-    drawLocalYearChart(data) {
-      if (this.chartLocalYearObj) { this.chartLocalYearObj.destroy(); this.chartLocalYearObj = null; }
-      if (!data || !data.length) { this.chartLocalYear = false; return; }
-      this.chartLocalYear = true;
+    updateLocalChart(data, chartDomId, chartObjRefName) {
+      if (this[chartObjRefName]) { this[chartObjRefName].destroy(); this[chartObjRefName] = null; }
+      if (!data || !data.length) return;
       this.$nextTick(() => {
-        const ctx = document.getElementById('localYearChart');
+        const ctx = document.getElementById(chartDomId);
         if (!ctx) return;
-        const labels = data.map(row => row['查報日期(年/月)'] + '-' + row['縣市名稱']);
-        const datasets = [{
-          label: '查報均價(元/20公斤(桶))',
-          data: data.map(row => row['查報均價(元/20公斤(桶))']),
-          borderColor: 'rgba(255, 99, 132, 1)',
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          fill: true,
-          tension: 0.2
-        }];
-        this.chartLocalYearObj = new Chart(ctx, {
+        // 依縣市分組，產生多條折線
+        const cityMap = {};
+        data.forEach(row => {
+          const city = row['縣市名稱'];
+          if (!cityMap[city]) cityMap[city] = [];
+          cityMap[city].push(row);
+        });
+        // 取得所有月份（x軸）
+        const allMonthsSet = new Set();
+        Object.values(cityMap).forEach(rows => {
+          rows.forEach(row => allMonthsSet.add(row['查報日期(年/月)']));
+        });
+        const allMonths = Array.from(allMonthsSet).sort();
+        const labels = allMonths;
+        // 每個縣市一條折線
+        const colorList = [
+          '#e6194b','#3cb44b','#ffe119','#4363d8','#f58231','#911eb4','#46f0f0','#f032e6','#bcf60c','#fabebe',
+          '#008080','#e6beff','#9a6324','#fffac8','#800000','#aaffc3','#808000','#ffd8b1','#000075','#808080'
+        ];
+        let colorIdx = 0;
+        const datasets = Object.keys(cityMap).map(city => {
+          // 依照 allMonths 補齊缺漏月份
+          const monthPriceMap = {};
+          cityMap[city].forEach(row => {
+            monthPriceMap[row['查報日期(年/月)']] = row['查報均價(元/20公斤(桶))'];
+          });
+          const dataArr = allMonths.map(m => monthPriceMap[m] !== undefined ? monthPriceMap[m] : null);
+          const color = colorList[colorIdx % colorList.length];
+          colorIdx++;
+          return {
+            label: city,
+            data: dataArr,
+            borderColor: color,
+            backgroundColor: color + '33',
+            fill: false,
+            tension: 0.2
+          };
+        });
+        this[chartObjRefName] = new Chart(ctx, {
           type: 'line',
           data: { labels, datasets },
           options: { responsive: true, plugins: { legend: { position: 'top' } } }
         });
       });
+    },
+    drawLocalYearChart(data) {
+      this.chartLocalYear = true;
+      this.updateLocalChart(data, 'localYearChart', 'chartLocalYearObj');
     },
     drawLocalYearRangeChart(data) {
-      if (this.chartLocalYearRangeObj) { this.chartLocalYearRangeObj.destroy(); this.chartLocalYearRangeObj = null; }
-      if (!data || !data.length) { this.chartLocalYearRange = false; return; }
       this.chartLocalYearRange = true;
-      this.$nextTick(() => {
-        const ctx = document.getElementById('localYearRangeChart');
-        if (!ctx) return;
-        const labels = data.map(row => row['查報日期(年/月)'] + '-' + row['縣市名稱']);
-        const datasets = [{
-          label: '查報均價(元/20公斤(桶))',
-          data: data.map(row => row['查報均價(元/20公斤(桶))']),
-          borderColor: 'rgba(54, 162, 235, 1)',
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          fill: true,
-          tension: 0.2
-        }];
-        this.chartLocalYearRangeObj = new Chart(ctx, {
-          type: 'line',
-          data: { labels, datasets },
-          options: { responsive: true, plugins: { legend: { position: 'top' } } }
-        });
-      });
+      this.updateLocalChart(data, 'localYearRangeChart', 'chartLocalYearRangeObj');
     },
     drawLocalCityChart(data) {
-      if (this.chartLocalCityObj) { this.chartLocalCityObj.destroy(); this.chartLocalCityObj = null; }
-      if (!data || !data.length) { this.chartLocalCity = false; return; }
       this.chartLocalCity = true;
-      this.$nextTick(() => {
-        const ctx = document.getElementById('localCityChart');
-        if (!ctx) return;
-        const labels = data.map(row => row['查報日期(年/月)']);
-        const datasets = [{
-          label: '查報均價(元/20公斤(桶))',
-          data: data.map(row => row['查報均價(元/20公斤(桶))']),
-          borderColor: 'rgba(255, 206, 86, 1)',
-          backgroundColor: 'rgba(255, 206, 86, 0.2)',
-          fill: true,
-          tension: 0.2
-        }];
-        this.chartLocalCityObj = new Chart(ctx, {
-          type: 'line',
-          data: { labels, datasets },
-          options: { responsive: true, plugins: { legend: { position: 'top' } } }
-        });
-      });
+      this.updateLocalChart(data, 'localCityChart', 'chartLocalCityObj');
     },
     drawLocalRegionChart(data) {
-      if (this.chartLocalRegionObj) { this.chartLocalRegionObj.destroy(); this.chartLocalRegionObj = null; }
-      if (!data || !data.length) { this.chartLocalRegion = false; return; }
       this.chartLocalRegion = true;
-      this.$nextTick(() => {
-        const ctx = document.getElementById('localRegionChart');
-        if (!ctx) return;
-        const labels = data.map(row => row['查報日期(年/月)'] + '-' + row['縣市名稱']);
-        const datasets = [{
-          label: '查報均價(元/20公斤(桶))',
-          data: data.map(row => row['查報均價(元/20公斤(桶))']),
-          borderColor: 'rgba(153, 102, 255, 1)',
-          backgroundColor: 'rgba(153, 102, 255, 0.2)',
-          fill: true,
-          tension: 0.2
-        }];
-        this.chartLocalRegionObj = new Chart(ctx, {
-          type: 'line',
-          data: { labels, datasets },
-          options: { responsive: true, plugins: { legend: { position: 'top' } } }
-        });
-      });
+      this.updateLocalChart(data, 'localRegionChart', 'chartLocalRegionObj');
     },
   }
 }).mount('#app');
