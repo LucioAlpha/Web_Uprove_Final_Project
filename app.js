@@ -32,19 +32,19 @@ app.use('/users', usersRouter);
 
 // ========== API: 顯示資料 ==========
 app.post('/api/history', (req, res) => {
-  db.all('SELECT * FROM 中油液化石油氣歷史牌價', (err, rows) => {
+  db.all('SELECT * FROM 中油液化石油氣歷史牌價 ORDER BY 調價日期 ASC', (err, rows) => {
     if (err) return res.status(500).json({ error: '資料查詢失敗' });
     res.json(rows);
   });
 });
 app.post('/api/national', (req, res) => {
-  db.all('SELECT * FROM 全國家用桶裝瓦斯均價', (err, rows) => {
+  db.all('SELECT * FROM 全國家用桶裝瓦斯均價 ORDER BY 年份 ASC', (err, rows) => {
     if (err) return res.status(500).json({ error: '資料查詢失敗' });
     res.json(rows);
   });
 });
 app.post('/api/local', (req, res) => {
-  db.all('SELECT * FROM 各縣市家用桶裝瓦斯月均價', (err, rows) => {
+  db.all('SELECT * FROM 各縣市家用桶裝瓦斯月均價 ORDER BY "查報日期(年/月)" ASC', (err, rows) => {
     if (err) return res.status(500).json({ error: '資料查詢失敗' });
     res.json(rows);
   });
@@ -106,6 +106,7 @@ app.post('/api/query/History', (req, res) => {
     sql += ' WHERE substr(調價日期, 1, 4) BETWEEN ? AND ?';
     params.push(start.toString(), end.toString());
   }
+  sql += ' ORDER BY 調價日期 ASC';
   db.all(sql, params, (err, rows) => {
     if (err) return res.status(500).json({ error: '查詢失敗' });
     if (!rows || rows.length === 0) return res.status(404).json({ error: '查無資料' });
@@ -124,6 +125,7 @@ app.post('/api/query/National', (req, res) => {
     sql += ' WHERE 年份 BETWEEN ? AND ?';
     params.push(start, end);
   }
+  sql += ' ORDER BY 年份 ASC';
   db.all(sql, params, (err, rows) => {
     if (err) return res.status(500).json({ error: '查詢失敗' });
     res.json(rows);
@@ -164,6 +166,7 @@ app.post('/api/query/Local', (req, res) => {
   if (conditions.length > 0) {
     sql += ' WHERE ' + conditions.join(' AND ');
   }
+  sql += ' ORDER BY "查報日期(年/月)" ASC';
   // debug log
   console.log('查詢SQL:', sql);
   console.log('參數:', params);
