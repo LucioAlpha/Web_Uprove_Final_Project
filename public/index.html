@@ -10,7 +10,7 @@
 <body>
 <div id="app">
   <nav class="navbar">
-    <button v-for="tab in tabs" :key="tab.value" :class="['btn-secondary', {active: currentTab===tab.value}]" @click="currentTab=tab.value" style="margin-right:1em;">
+    <button v-for="tab in tabs" :key="tab.value" :class="['btn-secondary', {active: currentTab===tab.value}]" @click="setTab(tab.value)" style="margin-right:1em;">
       {{ tab.label }}
     </button>
   </nav>

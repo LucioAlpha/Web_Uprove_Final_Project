@@ -557,5 +557,12 @@ createApp({
       this.chartLocalRegion = true;
       this.updateLocalChart(data, 'localRegionChart', 'chartLocalRegionObj');
     },
+    setTab(tabValue) {
+      if (this.currentTab === tabValue) {
+        this.destroyAllCharts();
+        this.loadAll();
+      }
+      this.currentTab = tabValue;
+    },
   }
 }).mount('#app');
